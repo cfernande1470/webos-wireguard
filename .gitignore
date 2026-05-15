@@ -1,0 +1,29 @@
+dist/
+*.ipk
+*.tar.gz
+*.tar.xz
+*.o
+*.d
+*.a
+.DS_Store
+
+# Local test/build artifacts
+wgtest/
+*.log
+*.pid
+
+# Local generated assets/backups
+app/org.webosbrew.wireguard/icon-original-*.png
+
+# Do not commit real VPN configs
+wg0.conf
+*.conf
+
+# Allow safe example configs
+!examples/
+!examples/*.example.conf
+
+# Local build outputs
+uploader/wg-upload
+wireguard-go/wireguard-go
+wireguard-tools/src/wg

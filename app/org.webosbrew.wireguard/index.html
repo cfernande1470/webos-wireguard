@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WireGuard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="page">
+    <div class="wrap">
+
+      <div class="lang-row" aria-label="Language selector">
+        <button id="langEn" class="lang-button" type="button" onclick="setLanguage('en')">🇬🇧 English</button>
+        <button id="langEs" class="lang-button" type="button" onclick="setLanguage('es')">🇪🇸 Español</button>
+      </div>
+
+      <div class="title-row">
+        <img src="icon.png" class="logo" alt="WireGuard">
+        <div>
+          <h1>WireGuard</h1>
+          <div class="subtitle" data-i18n="subtitle">WireGuard client for webOS Homebrew</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="upload" onclick="installComponents()" data-i18n="installUpdate">Install / update</button>
+        <button class="primary" onclick="startVpn()" data-i18n="startVpn">Start VPN</button>
+        <button class="danger" onclick="stopVpn()" data-i18n="stopVpn">Stop VPN</button>
+        <button onclick="statusVpn()" data-i18n="status">Status</button>
+        <button class="danger" onclick="cleanupAll()" data-i18n="cleanAll">Uninstall</button>
+      </div>
+
+      <div class="buttons">
+        <button onclick="showRoutes()" data-i18n="routes">Routes</button>
+        <button onclick="showConfig()" data-i18n="config">Config</button>
+        <button onclick="showLog()" data-i18n="log">Log</button>
+        <button class="upload" onclick="uploadStart()" data-i18n="uploadConfig">Upload config</button>
+        <button class="donate" onclick="showDonatePopup()" data-i18n="donate">Donate!</button>
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle-box">
+          <input id="autostartToggle" type="checkbox" onchange="toggleAutostart()">
+          <span data-i18n="startOnBoot">Start on boot</span>
+        </label>
+      </div>
+
+      <div id="statusLine" class="status-line">Ready.</div>
+
+      <div class="output-box">
+        <pre id="out" tabindex="0">WireGuard Homebrew ready.</pre>
+      </div>
+
+      <div class="scroll-row">
+        <button onclick="scrollOutput(-1)" data-i18n="scrollUp">▲ Up</button>
+        <button onclick="scrollOutput(1)" data-i18n="scrollDown">▼ Down</button>
+        <button onclick="scrollOutputToEnd()" data-i18n="scrollEnd">End</button>
+      </div>
+
+      <div class="hint" data-i18n-html="hint">
+        To upload a configuration: press <b>Upload config</b>, open the URL on your computer and send your <code>wg0.conf</code>.
+      </div>
+
+    </div>
+  </div>
+
+  <div id="uploadModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="uploadTitle">Upload configuration</div>
+
+      <div class="modal-label">URL</div>
+      <div id="uploadUrl" class="modal-url">---</div>
+
+      <div class="modal-label">PIN</div>
+      <div id="uploadPin" class="modal-pin">----</div>
+
+      <div class="modal-help" data-i18n-html="uploadHelp">
+        Open the URL from your computer, enter the PIN and upload your <b>wg0.conf</b>.
+        Closing this window will stop the temporary upload server.
+      </div>
+
+      <button class="modal-button" onclick="closeUploadPopup()" data-i18n="close">Close</button>
+    </div>
+  </div>
+
+  <div id="donateModal" class="modal hidden">
+    <div class="modal-box donate-modal-box">
+      <div class="modal-title" data-i18n="donateTitle">Donate!</div>
+
+      <div class="donate-qr-wrap">
+        <img src="qrcode.png" class="donate-qr" alt="PayPal QR code">
+      </div>
+
+      <div class="donate-paypal-text" data-i18n="donatePaypal">Donate with PayPal</div>
+
+      <button class="modal-button donate-close-button" onclick="closeDonatePopup()" data-i18n="close">Close</button>
+    </div>
+  </div>
+
+  <script src="lib/webOSTVjs-1.2.4/webOSTV.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
