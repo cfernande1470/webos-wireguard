@@ -1,8 +1,14 @@
 # WireGuard for LG webOS Homebrew
 
+[English](#english) · [Español](#español)
+
+---
+
+# English
+
 A WireGuard client for rooted LG webOS TVs using Homebrew Channel.
 
-This project provides a simple webOS app that can install, configure, start, stop and monitor a WireGuard VPN tunnel on LG webOS. It uses **WireGuard in userspace** through `wireguard-go`, because LG webOS builds generally do not include the WireGuard kernel module.
+This project provides a simple webOS app that can install, configure, start, stop and monitor a WireGuard VPN tunnel on LG webOS. It uses WireGuard in userspace through `wireguard-go`, because LG webOS stock kernels usually do not include the WireGuard kernel module.
 
 The app is designed for rooted TVs with Homebrew Channel installed.
 
@@ -11,29 +17,31 @@ The app is designed for rooted TVs with Homebrew Channel installed.
 ## Features
 
 - WireGuard userspace tunnel using `wireguard-go`
-- Bundled `wg`, `wireguard-go` and upload helper binaries
-- Simple TV-friendly webOS UI
+- Bundled `wg`, `wireguard-go` and `wg-upload` binaries
+- TV-friendly webOS interface
 - English and Spanish UI
-- Manual **Install / update** button for runtime components
+- Manual **Install / update** workflow
 - No automatic payload installation on app launch
 - Temporary web upload server for `wg0.conf`
 - PIN-protected configuration upload
-- Start / stop / status / routes / config / logs from the app
+- Start, stop, status, routes, config and log actions
 - Optional autostart on boot
-- Uninstall button to remove runtime files
+- Runtime uninstall action
 - PayPal donation QR popup
 
 ---
 
 ## Why userspace WireGuard?
 
-On standard Linux systems, WireGuard usually runs as a kernel module. On LG webOS TVs, the WireGuard kernel module is normally not available in the stock kernel, so this project uses:
+On normal Linux systems, WireGuard usually runs as a kernel module.
 
-- `wireguard-go` for the userspace WireGuard interface
+On LG webOS TVs, the WireGuard kernel module is normally not available in the stock kernel. For that reason, this project uses:
+
+- `wireguard-go` to create the WireGuard interface in userspace
 - `wg` from `wireguard-tools` to configure the tunnel
 - a TUN interface created from userspace
 
-This makes it possible to run WireGuard without needing a custom webOS kernel.
+This makes it possible to run WireGuard without building or installing a custom webOS kernel.
 
 ---
 
@@ -43,9 +51,9 @@ This makes it possible to run WireGuard without needing a custom webOS kernel.
 - Homebrew Channel installed
 - Homebrew root service available
 - `/dev/net/tun` support on the TV
-- A compatible CPU architecture
+- Compatible CPU architecture
 
-The bundled binaries in the current package are built for:
+The bundled binaries in the current release are built for:
 
 ```text
 linux/arm64 / aarch64
@@ -63,15 +71,15 @@ If your TV is `armv7l`, you need to rebuild the binaries for ARMv7.
 
 ## Installation
 
-### 1. Build or download the IPK
+### 1. Download or build the IPK
 
-The packaged app is:
+Release package:
 
 ```text
 org.webosbrew.wireguard_1.0.0_all.ipk
 ```
 
-To package it manually:
+To package manually:
 
 ```sh
 rm -rf dist
@@ -79,7 +87,7 @@ mkdir -p dist
 ares-package -o dist app/org.webosbrew.wireguard
 ```
 
-The output will be:
+Output:
 
 ```text
 dist/org.webosbrew.wireguard_1.0.0_all.ipk
@@ -103,18 +111,7 @@ This copies the bundled runtime files to:
 /var/lib/webosbrew/wireguard
 ```
 
-Runtime files include:
-
-```text
-/var/lib/webosbrew/wireguard/bin/wg
-/var/lib/webosbrew/wireguard/bin/wireguard-go
-/var/lib/webosbrew/wireguard/bin/wg-upload
-/var/lib/webosbrew/wireguard/scripts/*.sh
-/var/lib/webosbrew/wireguard/conf
-/var/lib/webosbrew/wireguard/run
-```
-
-The app does **not** install the payload automatically. This is intentional.
+The app does not install the payload automatically. This is intentional.
 
 ---
 
@@ -144,27 +141,25 @@ Copy it, replace the placeholder keys and endpoint, then upload your real `wg0.c
 
 Do not commit real WireGuard configuration files. They contain private keys and private VPN details.
 
----
-
-## Configuration format
-
-Upload a normal `wg-quick` style config, for example:
+Example:
 
 ```ini
 [Interface]
-PrivateKey = YOUR_PRIVATE_KEY
-Address = 10.0.0.2/32
-DNS = 1.1.1.1
-MTU = 1420
+PrivateKey = REPLACE_WITH_CLIENT_PRIVATE_KEY
+Address = 10.10.10.2/32
 
 [Peer]
-PublicKey = SERVER_PUBLIC_KEY
+PublicKey = REPLACE_WITH_SERVER_PUBLIC_KEY
 AllowedIPs = 0.0.0.0/0
-Endpoint = vpn.example.com:51820
+Endpoint = vpn.example.invalid:51820
 PersistentKeepalive = 25
 ```
 
-The uploader converts the config for `wg setconf`.
+---
+
+## Configuration handling
+
+The uploader accepts normal `wg-quick` style configuration files and converts them for `wg setconf`.
 
 Handled fields:
 
@@ -178,13 +173,13 @@ AllowedIPs
 Endpoint
 PersistentKeepalive
 Address
-MTU
 ```
 
 Ignored fields:
 
 ```text
 DNS
+MTU
 Table
 SaveConfig
 PreUp
@@ -199,7 +194,7 @@ PostDown
 /var/lib/webosbrew/wireguard/conf/address
 ```
 
-The converted config is stored as:
+The converted WireGuard config is stored as:
 
 ```text
 /var/lib/webosbrew/wireguard/conf/wg0.conf
@@ -210,6 +205,10 @@ A backup of every uploaded config is stored in:
 ```text
 /var/lib/webosbrew/wireguard/uploads
 ```
+
+DNS handling is not implemented in version `1.0.0`.
+
+Uploaded `MTU` values are ignored by the uploader. The start script uses a default tunnel MTU of `1420`.
 
 ---
 
@@ -253,8 +252,6 @@ When enabled, it creates:
 ```
 
 At boot, the script waits for a default route and then starts WireGuard.
-
-Disable it from the app before uninstalling if needed.
 
 ---
 
@@ -373,16 +370,15 @@ curl -4 http://ifconfig.me/ip
 
 ## Security notes
 
-- Your private key is stored on the TV in:
+Your private key is stored on the TV in:
 
 ```text
 /var/lib/webosbrew/wireguard/conf/wg0.conf
 ```
 
-- The config upload server is temporary and PIN-protected.
-- The upload server should only be used on a trusted LAN.
-- Close the upload popup to stop the temporary upload server.
-- Do not publish real `wg0.conf` files or logs containing private data.
+The upload server is temporary and PIN-protected, but it should only be used on a trusted LAN.
+
+Do not publish real `wg0.conf` files or logs containing private data.
 
 ---
 
@@ -410,6 +406,9 @@ app/org.webosbrew.wireguard/
       upload-stop.sh
       autostart.sh
       uninstall.sh
+
+examples/
+  wg0.example.conf
 
 uploader/
   wg-upload.go
@@ -458,15 +457,15 @@ wireguard-go/LICENSE
 wireguard-tools/COPYING
 ```
 
-Your own app code should be licensed separately if you publish the repository.
+Add a project license if you want to define how the app-specific code may be reused.
 
 ---
 
-# WireGuard para LG webOS Homebrew
+# Español
 
 Cliente WireGuard para televisores LG webOS con root y Homebrew Channel.
 
-Este proyecto proporciona una app sencilla para webOS que permite instalar, configurar, arrancar, parar y monitorizar un túnel VPN WireGuard en LG webOS. Usa **WireGuard en userspace** mediante `wireguard-go`, porque las compilaciones normales de LG webOS aparentemente no incluyen el módulo WireGuard en el kernel.
+Este proyecto proporciona una app sencilla para webOS que permite instalar, configurar, arrancar, parar y monitorizar un túnel VPN WireGuard en LG webOS. Usa WireGuard en userspace mediante `wireguard-go`, porque los kernels stock de LG webOS normalmente no incluyen el módulo WireGuard en el kernel.
 
 La app está pensada para televisores con root y Homebrew Channel instalado.
 
@@ -475,29 +474,31 @@ La app está pensada para televisores con root y Homebrew Channel instalado.
 ## Funciones
 
 - Túnel WireGuard en userspace usando `wireguard-go`
-- Binarios incluidos: `wg`, `wireguard-go` y helper de subida
-- Interfaz sencilla adaptada a TV
+- Binarios incluidos: `wg`, `wireguard-go` y `wg-upload`
+- Interfaz adaptada a TV
 - Interfaz en inglés y español
-- Botón manual **Instalar / actualizar** para los componentes runtime
+- Flujo manual de **Instalar / actualizar**
 - Sin instalación automática del payload al abrir la app
 - Servidor web temporal para subir `wg0.conf`
 - Subida de configuración protegida con PIN
-- Arrancar / parar / estado / rutas / configuración / logs desde la app
+- Acciones de arrancar, parar, estado, rutas, configuración y log
 - Inicio automático opcional al arrancar
-- Botón de desinstalación para eliminar los ficheros runtime
+- Acción de desinstalación del runtime
 - Popup de donación con QR de PayPal
 
 ---
 
 ## ¿Por qué WireGuard en userspace?
 
-En Linux normal, WireGuard suele funcionar como módulo del kernel. En televisores LG webOS, el módulo WireGuard normalmente no está disponible en el kernel de fábrica, así que este proyecto usa:
+En Linux normal, WireGuard suele funcionar como módulo del kernel.
+
+En televisores LG webOS, el módulo WireGuard normalmente no está disponible en el kernel de fábrica. Por eso este proyecto usa:
 
 - `wireguard-go` para crear la interfaz WireGuard desde userspace
 - `wg` de `wireguard-tools` para configurar el túnel
 - una interfaz TUN creada desde userspace
 
-Así se puede usar WireGuard sin tener que compilar o instalar un kernel personalizado para webOS.
+Así se puede usar WireGuard sin compilar ni instalar un kernel personalizado para webOS.
 
 ---
 
@@ -527,15 +528,15 @@ Si tu TV es `armv7l`, tendrás que recompilar los binarios para ARMv7.
 
 ## Instalación
 
-### 1. Compilar o descargar el IPK
+### 1. Descargar o compilar el IPK
 
-La app empaquetada es:
+Paquete de release:
 
 ```text
 org.webosbrew.wireguard_1.0.0_all.ipk
 ```
 
-Para empaquetarla manualmente:
+Para empaquetar manualmente:
 
 ```sh
 rm -rf dist
@@ -543,7 +544,7 @@ mkdir -p dist
 ares-package -o dist app/org.webosbrew.wireguard
 ```
 
-El resultado será:
+Resultado:
 
 ```text
 dist/org.webosbrew.wireguard_1.0.0_all.ipk
@@ -567,18 +568,7 @@ Esto copia los componentes incluidos a:
 /var/lib/webosbrew/wireguard
 ```
 
-Ficheros runtime principales:
-
-```text
-/var/lib/webosbrew/wireguard/bin/wg
-/var/lib/webosbrew/wireguard/bin/wireguard-go
-/var/lib/webosbrew/wireguard/bin/wg-upload
-/var/lib/webosbrew/wireguard/scripts/*.sh
-/var/lib/webosbrew/wireguard/conf
-/var/lib/webosbrew/wireguard/run
-```
-
-La app **no** instala el payload automáticamente. Esto es intencionado.
+La app no instala el payload automáticamente. Esto es intencionado.
 
 ---
 
@@ -608,27 +598,25 @@ Cópiala, sustituye las claves y el endpoint de ejemplo, y luego sube tu `wg0.co
 
 No subas configuraciones WireGuard reales al repositorio. Contienen claves privadas y datos privados de tu VPN.
 
----
-
-## Formato de configuración
-
-Puedes subir una configuración normal de `wg-quick`, por ejemplo:
+Ejemplo:
 
 ```ini
 [Interface]
-PrivateKey = TU_CLAVE_PRIVADA
-Address = 10.0.0.2/32
-DNS = 1.1.1.1
-MTU = 1420
+PrivateKey = REPLACE_WITH_CLIENT_PRIVATE_KEY
+Address = 10.10.10.2/32
 
 [Peer]
-PublicKey = CLAVE_PUBLICA_SERVIDOR
+PublicKey = REPLACE_WITH_SERVER_PUBLIC_KEY
 AllowedIPs = 0.0.0.0/0
-Endpoint = vpn.example.com:51820
+Endpoint = vpn.example.invalid:51820
 PersistentKeepalive = 25
 ```
 
-El uploader la convierte a un formato compatible con `wg setconf`.
+---
+
+## Gestión de la configuración
+
+El uploader acepta configuraciones normales de tipo `wg-quick` y las convierte para `wg setconf`.
 
 Campos gestionados:
 
@@ -642,13 +630,13 @@ AllowedIPs
 Endpoint
 PersistentKeepalive
 Address
-MTU
 ```
 
 Campos ignorados:
 
 ```text
 DNS
+MTU
 Table
 SaveConfig
 PreUp
@@ -674,6 +662,10 @@ Cada configuración subida se copia como backup en:
 ```text
 /var/lib/webosbrew/wireguard/uploads
 ```
+
+La gestión de DNS no está implementada en la versión `1.0.0`.
+
+Los valores `MTU` subidos se ignoran en el uploader. El script de arranque usa una MTU de túnel por defecto de `1420`.
 
 ---
 
@@ -718,13 +710,11 @@ Cuando está activado, crea:
 
 Durante el arranque, el script espera a que exista una ruta por defecto y luego inicia WireGuard.
 
-Puedes desactivarlo desde la app.
-
 ---
 
 ## Desinstalación
 
-El botón **Desinstalar** para WireGuard y elimina:
+El botón **Desinstalar** detiene WireGuard y elimina:
 
 ```text
 /var/lib/webosbrew/wireguard
@@ -787,7 +777,7 @@ file app/org.webosbrew.wireguard/payload/wireguard/bin/*
 
 Significa que un binario seguía ejecutándose mientras se intentaba reemplazar.
 
-El instalador para `wireguard-go` y `wg-upload` antes de copiar binarios nuevos.
+El instalador detiene `wireguard-go` y `wg-upload` antes de copiar binarios nuevos.
 
 Pulsa **Instalar / actualizar** otra vez.
 
@@ -837,16 +827,15 @@ curl -4 http://ifconfig.me/ip
 
 ## Seguridad
 
-- Tu clave privada se guarda en la TV en:
+Tu clave privada se guarda en la TV en:
 
 ```text
 /var/lib/webosbrew/wireguard/conf/wg0.conf
 ```
 
-- El servidor de subida es temporal y está protegido con PIN.
-- Usa el servidor de subida solo en una red LAN de confianza.
-- Cierra el popup de subida para parar el servidor temporal.
-- No publiques configuraciones reales ni logs con datos privados.
+El servidor de subida es temporal y está protegido con PIN, pero debe usarse solo en una LAN de confianza.
+
+No publiques configuraciones reales ni logs con datos privados.
 
 ---
 
@@ -874,6 +863,9 @@ app/org.webosbrew.wireguard/
       upload-stop.sh
       autostart.sh
       uninstall.sh
+
+examples/
+  wg0.example.conf
 
 uploader/
   wg-upload.go
@@ -922,4 +914,4 @@ wireguard-go/LICENSE
 wireguard-tools/COPYING
 ```
 
-El código propio de la app debería llevar una licencia separada si publicas el repositorio.
+Añade una licencia de proyecto si quieres definir cómo puede reutilizarse el código específico de la app.
