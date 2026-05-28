@@ -76,7 +76,7 @@ If your TV is `armv7l`, you need to rebuild the binaries for ARMv7.
 Release package:
 
 ```text
-org.webosbrew.wireguard_1.0.0_all.ipk
+org.wireguard_1.0.0_all.ipk
 ```
 
 To package manually:
@@ -84,13 +84,13 @@ To package manually:
 ```sh
 rm -rf dist
 mkdir -p dist
-ares-package -o dist app/org.webosbrew.wireguard
+ares-package -o dist app/org.wireguard
 ```
 
 Output:
 
 ```text
-dist/org.webosbrew.wireguard_1.0.0_all.ipk
+dist/org.wireguard_1.0.0_all.ipk
 ```
 
 ### 2. Install using Homebrew Channel
