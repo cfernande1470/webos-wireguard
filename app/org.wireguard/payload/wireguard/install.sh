@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-APPID="org.webosbrew.wireguard"
+APPID="org.wireguard"
 DST="/var/lib/webosbrew/wireguard"
 
 find_appdir() {
@@ -144,8 +144,8 @@ fi
 
 echo
 echo "== installed binary versions =="
-"$DST/bin/wg" --version 2>&1 || true
-"$DST/bin/wireguard-go" --version 2>&1 || true
+"$DST/bin/wg" --version 2>/dev/null || true
+"$DST/bin/wireguard-go" --version 2>/dev/null || true
 
 echo
 echo "OK: components installed/updated"
