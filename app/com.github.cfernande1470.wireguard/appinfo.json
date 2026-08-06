@@ -1,10 +1,10 @@
 {
-  "id": "org.wireguard",
+  "id": "com.github.cfernande1470.wireguard",
   "title": "WireGuard",
   "main": "index.html",
   "icon": "icon.png",
   "type": "web",
-  "vendor": "webOSBrew",
-  "version": "1.0.0",
+  "vendor": "cfernande1470",
+  "version": "1.0.1",
   "appDescription": "WireGuard client for rooted LG webOS with Homebrew Channel"
 }

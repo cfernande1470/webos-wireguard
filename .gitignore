@@ -13,7 +13,7 @@ wgtest/
 *.pid
 
 # Local generated assets/backups
-app/org.webosbrew.wireguard/icon-original-*.png
+app/com.github.cfernande1470.wireguard/icon-original-*.png
 
 # Do not commit real VPN configs
 wg0.conf

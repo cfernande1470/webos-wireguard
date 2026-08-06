@@ -56,7 +56,7 @@ This makes it possible to run WireGuard without building or installing a custom 
 The bundled binaries in the current release are built for:
 
 ```text
-linux/arm64 / aarch64
+linux/armv7 (32-bit ARM)
 ```
 
 Check your TV architecture with:
@@ -65,7 +65,7 @@ Check your TV architecture with:
 uname -m
 ```
 
-If your TV is `armv7l`, you need to rebuild the binaries for ARMv7.
+The bundled ARMv7 binaries also run on supported 64-bit LG TVs.
 
 ---
 
@@ -76,21 +76,19 @@ If your TV is `armv7l`, you need to rebuild the binaries for ARMv7.
 Release package:
 
 ```text
-org.wireguard_1.0.0_all.ipk
+com.github.cfernande1470.wireguard_1.0.1_all.ipk
 ```
 
 To package manually:
 
 ```sh
-rm -rf dist
-mkdir -p dist
-ares-package -o dist app/org.wireguard
+make package
 ```
 
 Output:
 
 ```text
-dist/org.wireguard_1.0.0_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.1_all.ipk
 ```
 
 ### 2. Install using Homebrew Channel
@@ -206,7 +204,7 @@ A backup of every uploaded config is stored in:
 /var/lib/webosbrew/wireguard/uploads
 ```
 
-DNS handling is not implemented in version `1.0.0`.
+DNS handling is not implemented in version `1.0.1`.
 
 Uploaded `MTU` values are ignored by the uploader. The start script uses a default tunnel MTU of `1420`.
 
@@ -237,7 +235,7 @@ The VPN endpoint is pinned outside the tunnel using the original default route, 
 
 IPv6 routes and IPv6 addresses are currently ignored.
 
-This is intentional for version `1.0.0`.
+This is intentional for version `1.0.1`.
 
 ---
 
@@ -276,9 +274,9 @@ After that, you can remove the app from Homebrew Channel.
 ```sh
 cd uploader
 
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 \
   go build -trimpath -ldflags="-s -w" \
-  -o ../app/org.webosbrew.wireguard/payload/wireguard/bin/wg-upload \
+  -o ../app/com.github.cfernande1470.wireguard/payload/wireguard/bin/wg-upload \
   ./wg-upload.go
 
 cd ..
@@ -289,27 +287,27 @@ cd ..
 ```sh
 cd wireguard-go
 
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 \
   go build -trimpath -ldflags="-s -w" \
-  -o ../app/org.webosbrew.wireguard/payload/wireguard/bin/wireguard-go .
+  -o ../app/com.github.cfernande1470.wireguard/payload/wireguard/bin/wireguard-go .
 
 cd ..
 ```
 
 ### Build for ARMv7
 
-For older ARMv7 TVs:
+For all supported TVs:
 
 ```sh
 GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build ...
 ```
 
-Make sure every bundled binary matches the TV architecture.
+All bundled binaries must remain 32-bit ARM to support both 32-bit and 64-bit LG TVs.
 
 Check binaries with:
 
 ```sh
-file app/org.webosbrew.wireguard/payload/wireguard/bin/*
+file app/com.github.cfernande1470.wireguard/payload/wireguard/bin/*
 ```
 
 ---
@@ -358,7 +356,7 @@ wg show wg0
 
 ### Uploaded config works but DNS does not change
 
-DNS handling is not implemented in version `1.0.0`.
+DNS handling is not implemented in version `1.0.1`.
 
 Use IP-based tests first, for example:
 
@@ -385,7 +383,7 @@ Do not publish real `wg0.conf` files or logs containing private data.
 ## Project layout
 
 ```text
-app/org.webosbrew.wireguard/
+app/com.github.cfernande1470.wireguard/
   appinfo.json
   index.html
   css/
@@ -421,6 +419,14 @@ wireguard-tools/
 
 ## Changelog
 
+### 1.0.1
+
+Fixed:
+
+- Renamed the application and package consistently to `com.github.cfernande1470.wireguard`
+- Rebuilt all bundled executables for 32-bit ARMv7 compatibility
+- Added an MIT licence and reproducible build, package and release verification scripts
+
 ### 1.0.0
 
 Initial stable release.
@@ -443,21 +449,19 @@ Added:
 Notes:
 
 - WireGuard runs in userspace because the WireGuard kernel module is not normally available on LG webOS stock kernels.
-- Current bundled binaries are built for `linux/arm64`.
+- Current bundled binaries are built for 32-bit `linux/armv7`.
 - IPv6 and DNS handling are not implemented in this release.
 
 ---
 
 ## License
 
-This project bundles or uses components from WireGuard projects. Check the license files included in the repository:
+The app-specific code is licensed under the [MIT License](LICENSE). Bundled WireGuard components retain their own licences:
 
 ```text
 wireguard-go/LICENSE
 wireguard-tools/COPYING
 ```
-
-Add a project license if you want to define how the app-specific code may be reused.
 
 ---
 
@@ -513,7 +517,7 @@ Así se puede usar WireGuard sin compilar ni instalar un kernel personalizado pa
 Los binarios incluidos actualmente están compilados para:
 
 ```text
-linux/arm64 / aarch64
+linux/armv7 (32-bit ARM)
 ```
 
 Comprueba la arquitectura de tu TV con:
@@ -522,7 +526,7 @@ Comprueba la arquitectura de tu TV con:
 uname -m
 ```
 
-Si tu TV es `armv7l`, tendrás que recompilar los binarios para ARMv7.
+Los binarios ARMv7 incluidos también funcionan en televisores LG de 64 bits compatibles.
 
 ---
 
@@ -533,21 +537,19 @@ Si tu TV es `armv7l`, tendrás que recompilar los binarios para ARMv7.
 Paquete de release:
 
 ```text
-org.webosbrew.wireguard_1.0.0_all.ipk
+com.github.cfernande1470.wireguard_1.0.1_all.ipk
 ```
 
 Para empaquetar manualmente:
 
 ```sh
-rm -rf dist
-mkdir -p dist
-ares-package -o dist app/org.webosbrew.wireguard
+make package
 ```
 
 Resultado:
 
 ```text
-dist/org.webosbrew.wireguard_1.0.0_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.1_all.ipk
 ```
 
 ### 2. Instalar usando Homebrew Channel
@@ -663,7 +665,7 @@ Cada configuración subida se copia como backup en:
 /var/lib/webosbrew/wireguard/uploads
 ```
 
-La gestión de DNS no está implementada en la versión `1.0.0`.
+La gestión de DNS no está implementada en la versión `1.0.1`.
 
 Los valores `MTU` subidos se ignoran en el uploader. El script de arranque usa una MTU de túnel por defecto de `1420`.
 
@@ -694,7 +696,7 @@ La ruta hacia el endpoint VPN se fija fuera del túnel usando la ruta por defect
 
 Las rutas IPv6 y direcciones IPv6 se ignoran actualmente.
 
-Esto es intencionado en la versión `1.0.0`.
+Esto es intencionado en la versión `1.0.1`.
 
 ---
 
@@ -733,9 +735,9 @@ Después puedes eliminar la app desde Homebrew Channel.
 ```sh
 cd uploader
 
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 \
   go build -trimpath -ldflags="-s -w" \
-  -o ../app/org.webosbrew.wireguard/payload/wireguard/bin/wg-upload \
+  -o ../app/com.github.cfernande1470.wireguard/payload/wireguard/bin/wg-upload \
   ./wg-upload.go
 
 cd ..
@@ -746,27 +748,27 @@ cd ..
 ```sh
 cd wireguard-go
 
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 \
   go build -trimpath -ldflags="-s -w" \
-  -o ../app/org.webosbrew.wireguard/payload/wireguard/bin/wireguard-go .
+  -o ../app/com.github.cfernande1470.wireguard/payload/wireguard/bin/wireguard-go .
 
 cd ..
 ```
 
 ### Compilar para ARMv7
 
-Para TVs antiguas ARMv7:
+Para todos los televisores compatibles:
 
 ```sh
 GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build ...
 ```
 
-Asegúrate de que todos los binarios incluidos coinciden con la arquitectura de la TV.
+Todos los binarios incluidos deben seguir siendo ARM de 32 bits para admitir televisores LG de 32 y 64 bits.
 
 Comprueba los binarios con:
 
 ```sh
-file app/org.webosbrew.wireguard/payload/wireguard/bin/*
+file app/com.github.cfernande1470.wireguard/payload/wireguard/bin/*
 ```
 
 ---
@@ -815,7 +817,7 @@ wg show wg0
 
 ### La configuración sube bien pero DNS no cambia
 
-La gestión de DNS no está implementada en la versión `1.0.0`.
+La gestión de DNS no está implementada en la versión `1.0.1`.
 
 Prueba primero con IP pública:
 
@@ -842,7 +844,7 @@ No publiques configuraciones reales ni logs con datos privados.
 ## Estructura del proyecto
 
 ```text
-app/org.webosbrew.wireguard/
+app/com.github.cfernande1470.wireguard/
   appinfo.json
   index.html
   css/
@@ -878,6 +880,14 @@ wireguard-tools/
 
 ## Registro de cambios
 
+### 1.0.1
+
+Corregido:
+
+- Renombrado coherente de la aplicación y el paquete a `com.github.cfernande1470.wireguard`
+- Recompilación de todos los ejecutables incluidos para ARMv7 de 32 bits
+- Añadida la licencia MIT y scripts reproducibles de compilación, empaquetado y verificación
+
 ### 1.0.0
 
 Primera versión estable.
@@ -900,18 +910,16 @@ Añadido:
 Notas:
 
 - WireGuard se ejecuta en userspace porque el módulo WireGuard del kernel no suele estar disponible en kernels stock de LG webOS.
-- Los binarios incluidos actualmente están compilados para `linux/arm64`.
+- Los binarios incluidos actualmente están compilados para `linux/armv7` de 32 bits.
 - IPv6 y gestión de DNS no están implementados en esta versión.
 
 ---
 
 ## Licencia
 
-Este proyecto incluye o usa componentes de WireGuard. Revisa los ficheros de licencia incluidos en el repositorio:
+El código específico de la app está publicado bajo la [licencia MIT](LICENSE). Los componentes de WireGuard incluidos conservan sus propias licencias:
 
 ```text
 wireguard-go/LICENSE
 wireguard-tools/COPYING
 ```
-
-Añade una licencia de proyecto si quieres definir cómo puede reutilizarse el código específico de la app.

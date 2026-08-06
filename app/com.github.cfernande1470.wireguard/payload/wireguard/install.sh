@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-APPID="org.webosbrew.wireguard"
+APPID="com.github.cfernande1470.wireguard"
 DST="/var/lib/webosbrew/wireguard"
 
 find_appdir() {

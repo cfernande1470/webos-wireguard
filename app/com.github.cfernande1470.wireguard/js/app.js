@@ -1,5 +1,5 @@
 const BASE = "/var/lib/webosbrew/wireguard";
-const APPDIR = "/media/developer/apps/usr/palm/applications/org.webosbrew.wireguard";
+const APPDIR = "/media/developer/apps/usr/palm/applications/com.github.cfernande1470.wireguard";
 const HB_SERVICE = "luna://org.webosbrew.hbchannel.service";
 
 const I18N = {
@@ -400,7 +400,7 @@ function checkComponents(callback) {
 
 function installComponents() {
   const cmd =
-    "APPID='org.webosbrew.wireguard'; " +
+    "APPID='com.github.cfernande1470.wireguard'; " +
     "echo 'Installing/updating WireGuard components...'; " +
     "echo; echo '== whoami / id =='; " +
     "id 2>&1 || true; " +
@@ -418,12 +418,12 @@ function installComponents() {
     "done; " +
     "if [ -z \"$INSTALL\" ]; then " +
       "echo; echo '== fallback search =='; " +
-      "INSTALL=$(find /media -type f -path '*/org.webosbrew.wireguard/payload/wireguard/install.sh' 2>/dev/null | head -1); " +
+      "INSTALL=$(find /media -type f -path '*/com.github.cfernande1470.wireguard/payload/wireguard/install.sh' 2>/dev/null | head -1); " +
     "fi; " +
     "if [ -z \"$INSTALL\" ]; then " +
       "echo 'ERROR: cannot find payload/wireguard/install.sh'; " +
       "echo; echo '== matching files =='; " +
-      "find /media -path '*org.webosbrew.wireguard*' 2>/dev/null | head -120; " +
+      "find /media -path '*com.github.cfernande1470.wireguard*' 2>/dev/null | head -120; " +
       "echo; echo 'INSTALL_RC=1'; " +
       "exit 0; " +
     "fi; " +
