@@ -37,11 +37,13 @@ Section: misc
 Priority: optional
 Architecture: all
 Installed-Size: $INSTALLED_SIZE
-Maintainer: cfernande1470
+Maintainer: Carlos Fernandez <cfernande1470@users.noreply.github.com>
 Description: WireGuard client for rooted LG webOS with Homebrew Channel.
 webOS-Package-Format-Version: 2
-webOS-Packager-Version: webos-wireguard
+webOS-Packager-Version: x.y.x
 EOF
+
+chmod 644 "$CONTROL/control"
 
 rm -f "$DIST/${APP_ID}_${VERSION}_all.ipk"
 printf '2.0\n' > "$WORK/debian-binary"
@@ -49,7 +51,10 @@ tar -C "$CONTROL" -czf "$WORK/control.tar.gz" control
 tar -C "$DATA" -czf "$WORK/data.tar.gz" usr
 (
   cd "$WORK"
-  ar crD "$DIST/${APP_ID}_${VERSION}_all.ipk" debian-binary control.tar.gz data.tar.gz
+  # LG appinstalld rejects archives produced in GNU ar deterministic mode because
+  # their member timestamps are forced to the Unix epoch. Match ares-package and
+  # retain the actual member timestamps instead.
+  ar crU "$DIST/${APP_ID}_${VERSION}_all.ipk" debian-binary control.tar.gz data.tar.gz
 )
 cp "$ROOT/$APP_ID.manifest.json" "$DIST/$APP_ID.manifest.json"
 

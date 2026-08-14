@@ -41,6 +41,12 @@ CONTROL="$(ar p "$IPK" control.tar.gz | tar xzO control)"
 echo "$CONTROL" | grep -qx "Package: $APP_ID"
 echo "$CONTROL" | grep -qx "Version: $VERSION"
 echo "$CONTROL" | grep -qx 'Architecture: all'
+echo "$CONTROL" | grep -Eq '^Maintainer: .+ <[^>]+@[^>]+>$'
+
+if ar tv "$IPK" | grep -q ' 1970 '; then
+  echo "ERROR: deterministic ar timestamps are rejected by LG appinstalld" >&2
+  exit 1
+fi
 
 ar p "$IPK" data.tar.gz | tar tzf - | grep -q "^usr/palm/applications/$APP_ID/appinfo.json$"
 ar p "$IPK" data.tar.gz | tar tzf - | grep -q "^usr/palm/applications/$APP_ID/payload/wireguard/scripts/boot.sh$"
