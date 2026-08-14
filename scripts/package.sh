@@ -3,7 +3,7 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_ID="com.github.cfernande1470.wireguard"
-VERSION="1.0.1"
+VERSION="1.0.2"
 APP="$ROOT/app/$APP_ID"
 DIST="$ROOT/dist"
 WORK="$(mktemp -d)"

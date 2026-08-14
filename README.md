@@ -23,7 +23,7 @@ The app is designed for rooted TVs with Homebrew Channel installed.
 - Manual **Install / update** workflow
 - No automatic payload installation on app launch
 - Temporary web upload server for `wg0.conf`
-- PIN-protected configuration upload
+- Time-limited configuration upload protected by a random access code and failed-attempt lockout
 - Start, stop, status, routes, config and log actions
 - Optional autostart on boot
 - Runtime uninstall action
@@ -76,7 +76,7 @@ The bundled ARMv7 binaries also run on supported 64-bit LG TVs.
 Release package:
 
 ```text
-com.github.cfernande1470.wireguard_1.0.1_all.ipk
+com.github.cfernande1470.wireguard_1.0.2_all.ipk
 ```
 
 To package manually:
@@ -88,7 +88,7 @@ make package
 Output:
 
 ```text
-dist/com.github.cfernande1470.wireguard_1.0.1_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.2_all.ipk
 ```
 
 ### 2. Install using Homebrew Channel
@@ -103,13 +103,15 @@ After launching the app, press:
 Install / update
 ```
 
-This copies the bundled runtime files to:
+This prepares persistent state under:
 
 ```text
 /var/lib/webosbrew/wireguard
 ```
 
-The app does not install the payload automatically. This is intentional.
+The packaged binaries and scripts stay inside the application directory. The state directory only contains the
+configuration, logs, runtime files, and symlinks to the packaged payload, so updates take effect without duplicating
+the binaries. The app does not prepare this state automatically; this is intentional.
 
 ---
 
@@ -119,7 +121,7 @@ The app does not install the payload automatically. This is intentional.
 2. Press **Install / update**.
 3. Press **Upload config**.
 4. Open the displayed URL from a computer or phone on the same LAN.
-5. Enter the displayed PIN.
+5. Enter the displayed access code.
 6. Upload your `wg0.conf`.
 7. Return to the TV.
 8. Press **Start VPN**.
@@ -204,7 +206,7 @@ A backup of every uploaded config is stored in:
 /var/lib/webosbrew/wireguard/uploads
 ```
 
-DNS handling is not implemented in version `1.0.1`.
+DNS handling is not implemented in version `1.0.2`.
 
 Uploaded `MTU` values are ignored by the uploader. The start script uses a default tunnel MTU of `1420`.
 
@@ -235,7 +237,7 @@ The VPN endpoint is pinned outside the tunnel using the original default route, 
 
 IPv6 routes and IPv6 addresses are currently ignored.
 
-This is intentional for version `1.0.1`.
+This is intentional for version `1.0.2`.
 
 ---
 
@@ -249,7 +251,8 @@ When enabled, it creates:
 /var/lib/webosbrew/init.d/90-wireguard
 ```
 
-At boot, the script waits for a default route and then starts WireGuard.
+This is a symlink to the packaged `boot.sh`. At boot, the script waits for a default route and then starts WireGuard.
+If the app is removed, the link becomes non-executable and the Homebrew hook runner skips it.
 
 ---
 
@@ -314,13 +317,10 @@ file app/com.github.cfernande1470.wireguard/payload/wireguard/bin/*
 
 ## Troubleshooting
 
-### `Text file busy` during install/update
+### Updating from 1.0.1
 
-This means a binary was still running while being replaced.
-
-The installer stops `wireguard-go` and `wg-upload` before copying new binaries.
-
-Run **Install / update** again.
+Run **Install / update** once. The installer stops the old runtime, removes the copied payload, replaces it with
+symlinks to the packaged files, and preserves the existing configuration.
 
 ### `ERROR luna-call`
 
@@ -356,7 +356,7 @@ wg show wg0
 
 ### Uploaded config works but DNS does not change
 
-DNS handling is not implemented in version `1.0.1`.
+DNS handling is not implemented in version `1.0.2`.
 
 Use IP-based tests first, for example:
 
@@ -374,7 +374,8 @@ Your private key is stored on the TV in:
 /var/lib/webosbrew/wireguard/conf/wg0.conf
 ```
 
-The upload server is temporary and PIN-protected, but it should only be used on a trusted LAN.
+The upload server uses a random eight-character access code. It stops after one successful upload, five incorrect
+codes, or ten minutes. The connection is still plain HTTP, so it should only be used on a trusted LAN.
 
 Do not publish real `wg0.conf` files or logs containing private data.
 
@@ -403,6 +404,7 @@ app/com.github.cfernande1470.wireguard/
       upload-start.sh
       upload-stop.sh
       autostart.sh
+      boot.sh
       uninstall.sh
 
 examples/
@@ -418,6 +420,16 @@ wireguard-tools/
 ---
 
 ## Changelog
+
+### 1.0.2
+
+Changed:
+
+- Keep binaries and scripts in the application directory and link to them instead of copying the payload
+- Use a symlinked boot hook so removing the app cannot keep starting the VPN
+- Preserve only configuration, logs, and runtime state under `/var/lib/webosbrew/wireguard`
+- Replace the four-digit PIN with a random eight-character access code
+- Stop the upload server after one successful upload or ten minutes, and lock it after five incorrect codes
 
 ### 1.0.1
 
@@ -484,7 +496,7 @@ La app está pensada para televisores con root y Homebrew Channel instalado.
 - Flujo manual de **Instalar / actualizar**
 - Sin instalación automática del payload al abrir la app
 - Servidor web temporal para subir `wg0.conf`
-- Subida de configuración protegida con PIN
+- Subida temporal protegida por un código aleatorio, con caducidad y bloqueo tras varios intentos fallidos
 - Acciones de arrancar, parar, estado, rutas, configuración y log
 - Inicio automático opcional al arrancar
 - Acción de desinstalación del runtime
@@ -537,7 +549,7 @@ Los binarios ARMv7 incluidos también funcionan en televisores LG de 64 bits com
 Paquete de release:
 
 ```text
-com.github.cfernande1470.wireguard_1.0.1_all.ipk
+com.github.cfernande1470.wireguard_1.0.2_all.ipk
 ```
 
 Para empaquetar manualmente:
@@ -549,7 +561,7 @@ make package
 Resultado:
 
 ```text
-dist/com.github.cfernande1470.wireguard_1.0.1_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.2_all.ipk
 ```
 
 ### 2. Instalar usando Homebrew Channel
@@ -564,13 +576,15 @@ Después de abrir la app, pulsa:
 Instalar / actualizar
 ```
 
-Esto copia los componentes incluidos a:
+Esto prepara el estado persistente en:
 
 ```text
 /var/lib/webosbrew/wireguard
 ```
 
-La app no instala el payload automáticamente. Esto es intencionado.
+Los binarios y scripts permanecen dentro del directorio de la aplicación. El directorio de estado solo contiene la
+configuración, los logs, los datos de ejecución y enlaces al payload empaquetado, por lo que las actualizaciones se
+aplican sin duplicar los binarios. La app no prepara este estado automáticamente; esto es intencionado.
 
 ---
 
@@ -580,7 +594,7 @@ La app no instala el payload automáticamente. Esto es intencionado.
 2. Pulsa **Instalar / actualizar**.
 3. Pulsa **Subir config**.
 4. Abre la URL mostrada desde un ordenador o móvil en la misma LAN.
-5. Introduce el PIN mostrado.
+5. Introduce el código de acceso mostrado.
 6. Sube tu `wg0.conf`.
 7. Vuelve a la TV.
 8. Pulsa **Arrancar VPN**.
@@ -665,7 +679,7 @@ Cada configuración subida se copia como backup en:
 /var/lib/webosbrew/wireguard/uploads
 ```
 
-La gestión de DNS no está implementada en la versión `1.0.1`.
+La gestión de DNS no está implementada en la versión `1.0.2`.
 
 Los valores `MTU` subidos se ignoran en el uploader. El script de arranque usa una MTU de túnel por defecto de `1420`.
 
@@ -696,7 +710,7 @@ La ruta hacia el endpoint VPN se fija fuera del túnel usando la ruta por defect
 
 Las rutas IPv6 y direcciones IPv6 se ignoran actualmente.
 
-Esto es intencionado en la versión `1.0.1`.
+Esto es intencionado en la versión `1.0.2`.
 
 ---
 
@@ -710,7 +724,8 @@ Cuando está activado, crea:
 /var/lib/webosbrew/init.d/90-wireguard
 ```
 
-Durante el arranque, el script espera a que exista una ruta por defecto y luego inicia WireGuard.
+Es un enlace al `boot.sh` incluido en la app. Durante el arranque, el script espera a que exista una ruta por defecto
+y luego inicia WireGuard. Si se elimina la app, el enlace deja de ser ejecutable y Homebrew lo ignora.
 
 ---
 
@@ -775,13 +790,10 @@ file app/com.github.cfernande1470.wireguard/payload/wireguard/bin/*
 
 ## Solución de problemas
 
-### `Text file busy` durante Install / update
+### Actualizar desde 1.0.1
 
-Significa que un binario seguía ejecutándose mientras se intentaba reemplazar.
-
-El instalador detiene `wireguard-go` y `wg-upload` antes de copiar binarios nuevos.
-
-Pulsa **Instalar / actualizar** otra vez.
+Pulsa **Instalar / actualizar** una vez. El instalador detiene el runtime antiguo, elimina la copia del payload, la
+sustituye por enlaces a los archivos incluidos en la app y conserva la configuración existente.
 
 ### `ERROR luna-call`
 
@@ -817,7 +829,7 @@ wg show wg0
 
 ### La configuración sube bien pero DNS no cambia
 
-La gestión de DNS no está implementada en la versión `1.0.1`.
+La gestión de DNS no está implementada en la versión `1.0.2`.
 
 Prueba primero con IP pública:
 
@@ -835,7 +847,9 @@ Tu clave privada se guarda en la TV en:
 /var/lib/webosbrew/wireguard/conf/wg0.conf
 ```
 
-El servidor de subida es temporal y está protegido con PIN, pero debe usarse solo en una LAN de confianza.
+El servidor de subida usa un código de acceso aleatorio de ocho caracteres. Se detiene tras una subida correcta,
+cinco códigos incorrectos o diez minutos. La conexión sigue siendo HTTP sin cifrar, por lo que solo debe usarse en
+una LAN de confianza.
 
 No publiques configuraciones reales ni logs con datos privados.
 
@@ -864,6 +878,7 @@ app/com.github.cfernande1470.wireguard/
       upload-start.sh
       upload-stop.sh
       autostart.sh
+      boot.sh
       uninstall.sh
 
 examples/
@@ -879,6 +894,16 @@ wireguard-tools/
 ---
 
 ## Registro de cambios
+
+### 1.0.2
+
+Cambios:
+
+- Los binarios y scripts permanecen en la aplicación y se enlazan en lugar de copiar el payload
+- El hook de arranque es un enlace, así que eliminar la app no puede seguir iniciando la VPN
+- Solo la configuración, los logs y el estado de ejecución permanecen en `/var/lib/webosbrew/wireguard`
+- El PIN de cuatro cifras se sustituye por un código de acceso aleatorio de ocho caracteres
+- El servidor se detiene tras una subida correcta o diez minutos y se bloquea tras cinco códigos incorrectos
 
 ### 1.0.1
 

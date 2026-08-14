@@ -2,7 +2,8 @@
 set -eu
 
 BASE="/var/lib/webosbrew/wireguard"
-BIN="$BASE/bin/wg-upload"
+HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+BIN="$HERE/../bin/wg-upload"
 RUN="$BASE/run"
 PIDFILE="$RUN/wg-upload.pid"
 LOGFILE="$RUN/wg-upload.log"
@@ -15,23 +16,7 @@ mkdir -p "$RUN"
 
 kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
 killall wg-upload 2>/dev/null || true
-
-RAW="$(
-  {
-    date +%s 2>/dev/null
-    cat /proc/uptime 2>/dev/null
-    ps 2>/dev/null
-  } | sha256sum | awk '{print $1}'
-)"
-
-TOKEN="$(echo "$RAW" | tr -cd '0-9' | cut -c1-4)"
-
-if [ ${#TOKEN} -lt 4 ]; then
-  TOKEN="$(date +%s | awk '{printf "%04d", $1 % 10000}')"
-fi
-
-echo "$TOKEN" > "$TOKENFILE"
-chmod 600 "$TOKENFILE"
+rm -f "$TOKENFILE"
 
 DEFAULT_DEV="$(
   ip route show default 2>/dev/null \
@@ -81,12 +66,32 @@ fi
 
 echo "http://$IP:8088" > "$URLFILE"
 
-WG_UPLOAD_TOKEN="$TOKEN" "$BIN" >"$LOGFILE" 2>&1 &
+WG_UPLOAD_TOKEN_FILE="$TOKENFILE" WG_UPLOAD_TIMEOUT=600 "$BIN" >"$LOGFILE" 2>&1 &
 echo $! > "$PIDFILE"
+
+i=0
+while [ ! -s "$TOKENFILE" ] && [ "$i" -lt 10 ]; do
+  if ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    echo "ERROR: upload server stopped before creating its access code"
+    cat "$LOGFILE" 2>/dev/null || true
+    exit 1
+  fi
+  sleep 1
+  i=$((i + 1))
+done
+
+[ -s "$TOKENFILE" ] || { echo "ERROR: timed out waiting for the upload access code"; exit 1; }
+TOKEN="$(cat "$TOKENFILE")"
+if ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+  echo "ERROR: upload server stopped during startup"
+  cat "$LOGFILE" 2>/dev/null || true
+  exit 1
+fi
 
 echo "Upload server started"
 echo
 echo "URL: http://$IP:8088"
-echo "PIN: $TOKEN"
+echo "CODE: $TOKEN"
+echo "The server stops after 10 minutes, five wrong codes, or one successful upload."
 echo
-echo "Open that URL from your computer, enter the PIN and upload wg0.conf."
+echo "Open that URL from your computer, enter the access code and upload wg0.conf."

@@ -1,7 +1,8 @@
 #!/bin/sh
 
 BASE="/var/lib/webosbrew/wireguard"
-WG="$BASE/bin/wg"
+HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+WG="$HERE/../bin/wg"
 IFACE="wg0"
 
 echo "== process =="

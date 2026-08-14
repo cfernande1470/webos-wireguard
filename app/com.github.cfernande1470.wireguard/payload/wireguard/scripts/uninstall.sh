@@ -2,9 +2,10 @@
 set -eu
 
 BASE="/var/lib/webosbrew/wireguard"
+HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
 echo "== stopping VPN =="
-"$BASE/scripts/stop.sh" 2>/dev/null || true
+"$HERE/stop.sh" 2>/dev/null || true
 
 echo "== stopping processes =="
 killall wireguard-go 2>/dev/null || true

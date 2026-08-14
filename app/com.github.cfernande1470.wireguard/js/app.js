@@ -23,7 +23,8 @@ const I18N = {
     scrollEnd: "End",
     hint: 'To upload a configuration: press <b>Upload config</b>, open the URL on your computer and send your <code>wg0.conf</code>.',
     uploadTitle: "Upload configuration",
-    uploadHelp: 'Open the URL from your computer, enter the PIN and upload your <b>wg0.conf</b>. Closing this window will stop the temporary upload server.',
+    accessCode: "Access code",
+    uploadHelp: 'Open the URL from your computer, enter the access code and upload your <b>wg0.conf</b>. The temporary server stops after one upload, five wrong codes, or 10 minutes.',
     close: "Close",
 
     ready: "Ready.",
@@ -56,7 +57,7 @@ const I18N = {
       "WireGuard Homebrew ready.\n\n" +
       "Components already installed.\n\n" +
       "Options:\n" +
-      "1. Install / update if you have just updated the app\n" +
+      "1. Install once to prepare persistent state\n" +
       "2. Upload config\n" +
       "3. Start VPN\n" +
       "4. Status",
@@ -83,7 +84,7 @@ const I18N = {
     cleanupLabel: "Uninstall WireGuard",
 
     uploadInstructions:
-      "Open that URL from your computer, enter the PIN and upload your wg0.conf."
+      "Open that URL from your computer, enter the access code and upload your wg0.conf."
   },
 
   es: {
@@ -106,7 +107,8 @@ const I18N = {
     scrollEnd: "Fin",
     hint: 'Para subir configuración: pulsa <b>Subir config</b>, abre la URL en el ordenador y manda tu <code>wg0.conf</code>.',
     uploadTitle: "Subir configuración",
-    uploadHelp: 'Abre la URL desde el ordenador, introduce el PIN y sube tu <b>wg0.conf</b>. Al cerrar esta ventana se parará el servidor temporal de subida.',
+    accessCode: "Código de acceso",
+    uploadHelp: 'Abre la URL desde el ordenador, introduce el código de acceso y sube tu <b>wg0.conf</b>. El servidor temporal se detiene tras una subida, cinco códigos incorrectos o 10 minutos.',
     close: "Cerrar",
 
     ready: "Listo.",
@@ -139,7 +141,7 @@ const I18N = {
       "WireGuard Homebrew listo.\n\n" +
       "Componentes ya instalados.\n\n" +
       "Opciones:\n" +
-      "1. Instalar / actualizar si acabas de actualizar la app\n" +
+      "1. Instalar una vez para preparar los datos persistentes\n" +
       "2. Subir config\n" +
       "3. Arrancar VPN\n" +
       "4. Estado",
@@ -166,7 +168,7 @@ const I18N = {
     cleanupLabel: "Desinstalar WireGuard",
 
     uploadInstructions:
-      "Abre esa URL desde el portátil, introduce el PIN y sube el wg0.conf."
+      "Abre esa URL desde el portátil, introduce el código de acceso y sube el wg0.conf."
   }
 };
 
@@ -375,7 +377,9 @@ function run(command, label, timeoutMs) {
 
 function componentsCheckCommand() {
   return (
-    "if [ -x " + BASE + "/scripts/status.sh ] && " +
+    "if [ -L " + BASE + "/scripts ] && " +
+    "   [ -L " + BASE + "/bin ] && " +
+    "   [ -x " + BASE + "/scripts/status.sh ] && " +
     "   [ -x " + BASE + "/scripts/start.sh ] && " +
     "   [ -x " + BASE + "/scripts/stop.sh ] && " +
     "   [ -x " + BASE + "/bin/wg ] && " +
@@ -594,10 +598,10 @@ function showUploadPopup(output) {
   if (!modal || !urlEl || !pinEl) return;
 
   const urlMatch = output.match(/URL:\s*(http:\/\/[^\s]+)/i);
-  const pinMatch = output.match(/PIN:\s*([0-9]{4})/i) || output.match(/TOKEN:\s*([0-9]{4})/i);
+  const pinMatch = output.match(/CODE:\s*([0-9a-f]{8})/i);
 
   const url = urlMatch ? urlMatch[1] : "No encontrada";
-  const pin = pinMatch ? pinMatch[1] : "----";
+  const pin = pinMatch ? pinMatch[1] : "--------";
 
   urlEl.textContent = url;
   pinEl.textContent = pin;

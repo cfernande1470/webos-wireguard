@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"html"
@@ -11,36 +13,89 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 const base = "/var/lib/webosbrew/wireguard"
+const maxFailedAttempts = 5
 
 var token string
+var server *http.Server
+var failedAttempts int
+var attemptsMu sync.Mutex
+var shutdownOnce sync.Once
 
 func main() {
 	token = os.Getenv("WG_UPLOAD_TOKEN")
 	if token == "" {
 		token = randomToken()
 	}
+	tokenFile := os.Getenv("WG_UPLOAD_TOKEN_FILE")
+	if tokenFile != "" {
+		if err := os.WriteFile(tokenFile, []byte(token+"\n"), 0600); err != nil {
+			log.Fatalf("write token file: %v", err)
+		}
+		defer os.Remove(tokenFile)
+	}
+
+	timeout := 10 * time.Minute
+	if raw := os.Getenv("WG_UPLOAD_TIMEOUT"); raw != "" {
+		if seconds, err := strconv.Atoi(raw); err == nil && seconds > 0 {
+			timeout = time.Duration(seconds) * time.Second
+		}
+	}
 
 	log.Printf("wg-upload listening on :8088")
-	log.Printf("token: %s", token)
+	log.Printf("upload server expires after %s", timeout)
 
-	http.HandleFunc("/", index)
-	http.HandleFunc("/upload", upload)
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", index)
+	mux.HandleFunc("/upload", upload)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "OK")
 	})
 
-	log.Fatal(http.ListenAndServe(":8088", nil))
+	server = &http.Server{
+		Addr:              ":8088",
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
+
+	time.AfterFunc(timeout, func() {
+		shutdownServer("idle timeout reached")
+	})
+
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
 }
 
 func randomToken() string {
-	var b [16]byte
-	_, _ = rand.Read(b[:])
+	var b [4]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		log.Fatalf("generate access code: %v", err)
+	}
 	return hex.EncodeToString(b[:])
+}
+
+func shutdownServer(reason string) {
+	shutdownOnce.Do(func() {
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			log.Printf("stopping upload server: %s", reason)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			if server != nil {
+				_ = server.Shutdown(ctx)
+			}
+		}()
+	})
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -279,9 +334,9 @@ const indexHTML = `<!doctype html>
           <input id="uploadLang" type="hidden" name="lang" value="en">
 
           <div class="field">
-            <label for="pin" data-i18n="pinLabel">PIN shown on the TV</label>
-            <input id="pin" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" required>
-            <div class="hint" data-i18n="pinHint">Enter the 4-digit PIN displayed in the WireGuard app.</div>
+            <label for="pin" data-i18n="pinLabel">Access code shown on the TV</label>
+            <input id="pin" type="text" name="token" inputmode="text" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+            <div class="hint" data-i18n="pinHint">Enter the access code displayed in the WireGuard app.</div>
           </div>
 
           <div class="field">
@@ -305,8 +360,8 @@ const indexHTML = `<!doctype html>
       en: {
         title: "Upload WireGuard configuration",
         subtitle: 'Upload a standard <code>wg-quick</code> configuration file. The TV will convert it automatically.',
-        pinLabel: "PIN shown on the TV",
-        pinHint: "Enter the 4-digit PIN displayed in the WireGuard app.",
+        pinLabel: "Access code shown on the TV",
+        pinHint: "Enter the access code displayed in the WireGuard app.",
         fileLabel: "wg0.conf file",
         fileHint: 'Use your normal <code>wg0.conf</code> or <code>wg-quick</code> config.',
         submit: "Upload configuration",
@@ -315,8 +370,8 @@ const indexHTML = `<!doctype html>
       es: {
         title: "Subir configuración WireGuard",
         subtitle: 'Sube un archivo de configuración <code>wg-quick</code> normal. La TV lo convertirá automáticamente.',
-        pinLabel: "PIN mostrado en la TV",
-        pinHint: "Introduce el PIN de 4 cifras que aparece en la app WireGuard.",
+        pinLabel: "Código de acceso mostrado en la TV",
+        pinHint: "Introduce el código de acceso que aparece en la app WireGuard.",
         fileLabel: "Archivo wg0.conf",
         fileHint: 'Usa tu <code>wg0.conf</code> normal o una configuración <code>wg-quick</code>.',
         submit: "Subir configuración",
@@ -397,6 +452,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
 	if err := r.ParseMultipartForm(2 << 20); err != nil {
 		lang := langFromRequest(r)
 		writeError(w, lang, http.StatusBadRequest, tr(lang, "badUpload"))
@@ -405,7 +461,18 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 	lang := normalizeLang(r.FormValue("lang"))
 
-	if r.FormValue("token") != token {
+	if subtle.ConstantTimeCompare([]byte(r.FormValue("token")), []byte(token)) != 1 {
+		attemptsMu.Lock()
+		failedAttempts++
+		locked := failedAttempts >= maxFailedAttempts
+		attemptsMu.Unlock()
+
+		if locked {
+			writeError(w, lang, http.StatusTooManyRequests, tr(lang, "tooManyAttempts"))
+			shutdownServer("too many invalid access codes")
+			return
+		}
+
 		writeError(w, lang, http.StatusForbidden, tr(lang, "invalidPin"))
 		return
 	}
@@ -457,6 +524,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeSuccess(w, lang, backup, address)
+	shutdownServer("configuration accepted")
 }
 
 func langFromRequest(r *http.Request) string {
@@ -486,12 +554,13 @@ func tr(lang string, key string) string {
 		"en": {
 			"methodNotAllowed": "Method not allowed",
 			"badUpload":        "The upload could not be processed.",
-			"invalidPin":       "Invalid PIN.",
+			"invalidPin":       "Invalid access code.",
+			"tooManyAttempts":  "Too many incorrect access codes. Start the upload server again.",
 			"missingFile":      "Missing configuration file.",
 			"readFailed":       "Could not read the uploaded file.",
 			"invalidConfig":    "Invalid WireGuard configuration",
 			"successTitle":     "Configuration uploaded",
-			"successText":      "Your WireGuard configuration has been saved on the TV.",
+			"successText":      "Your WireGuard configuration has been saved on the TV. The upload server has stopped.",
 			"backup":           "Backup",
 			"address":          "Address",
 			"next":             "Return to the app and press Stop VPN, then Start VPN.",
@@ -501,12 +570,13 @@ func tr(lang string, key string) string {
 		"es": {
 			"methodNotAllowed": "Método no permitido",
 			"badUpload":        "No se ha podido procesar la subida.",
-			"invalidPin":       "PIN incorrecto.",
+			"invalidPin":       "Código de acceso incorrecto.",
+			"tooManyAttempts":  "Demasiados códigos incorrectos. Inicia de nuevo el servidor de subida.",
 			"missingFile":      "Falta el archivo de configuración.",
 			"readFailed":       "No se ha podido leer el archivo subido.",
 			"invalidConfig":    "Configuración WireGuard no válida",
 			"successTitle":     "Configuración subida",
-			"successText":      "La configuración WireGuard se ha guardado en la TV.",
+			"successText":      "La configuración WireGuard se ha guardado en la TV. El servidor de subida se ha detenido.",
 			"backup":           "Copia de seguridad",
 			"address":          "Address",
 			"next":             "Vuelve a la app y pulsa Parar VPN, y luego Arrancar VPN.",

@@ -72,12 +72,12 @@
       <div class="modal-label">URL</div>
       <div id="uploadUrl" class="modal-url">---</div>
 
-      <div class="modal-label">PIN</div>
-      <div id="uploadPin" class="modal-pin">----</div>
+      <div class="modal-label" data-i18n="accessCode">Access code</div>
+      <div id="uploadPin" class="modal-pin">--------</div>
 
       <div class="modal-help" data-i18n-html="uploadHelp">
-        Open the URL from your computer, enter the PIN and upload your <b>wg0.conf</b>.
-        Closing this window will stop the temporary upload server.
+        Open the URL from your computer, enter the access code and upload your <b>wg0.conf</b>.
+        The temporary server stops after one upload, five wrong codes, or 10 minutes.
       </div>
 
       <button class="modal-button" onclick="closeUploadPopup()" data-i18n="close">Close</button>

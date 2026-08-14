@@ -3,6 +3,7 @@ set -eu
 
 APPID="com.github.cfernande1470.wireguard"
 DST="/var/lib/webosbrew/wireguard"
+INIT_FILE="/var/lib/webosbrew/init.d/90-wireguard"
 
 find_appdir() {
   for d in \
@@ -19,31 +20,10 @@ find_appdir() {
   find /media -type d -path "*/applications/$APPID" 2>/dev/null | head -1
 }
 
-copy_exec() {
-  src="$1"
-  dst="$2"
-  tmp="${dst}.new.$$"
-
-  rm -f "$tmp"
-  cp "$src" "$tmp"
-  chmod 755 "$tmp"
-  mv -f "$tmp" "$dst"
-}
-
-copy_file() {
-  src="$1"
-  dst="$2"
-  tmp="${dst}.new.$$"
-
-  rm -f "$tmp"
-  cp "$src" "$tmp"
-  mv -f "$tmp" "$dst"
-}
-
 APPDIR="$(find_appdir)"
 SRC="$APPDIR/payload/wireguard"
 
-echo "== installing/updating WireGuard components =="
+echo "== preparing WireGuard state =="
 echo "APPDIR=$APPDIR"
 echo "SRC=$SRC"
 echo "DST=$DST"
@@ -55,27 +35,31 @@ find "$SRC" -maxdepth 4 -type f -print 2>/dev/null || true
 echo
 echo "== checking binaries =="
 for f in wg wireguard-go wg-upload; do
-  if [ ! -f "$SRC/bin/$f" ]; then
-    echo "ERROR: missing $SRC/bin/$f"
+  if [ ! -x "$SRC/bin/$f" ]; then
+    echo "ERROR: missing executable $SRC/bin/$f"
     exit 1
   fi
 done
 
 echo
 echo "== checking scripts =="
-for f in start.sh stop.sh status.sh upload-start.sh upload-stop.sh autostart.sh uninstall.sh; do
-  if [ ! -f "$SRC/scripts/$f" ]; then
-    echo "ERROR: missing $SRC/scripts/$f"
+for f in start.sh stop.sh status.sh upload-start.sh upload-stop.sh autostart.sh boot.sh uninstall.sh; do
+  if [ ! -x "$SRC/scripts/$f" ]; then
+    echo "ERROR: missing executable $SRC/scripts/$f"
     exit 1
   fi
 done
 
-mkdir -p "$DST/bin" "$DST/scripts" "$DST/conf" "$DST/run" "$DST/uploads"
-chmod 700 "$DST/conf"
-chmod 700 "$DST/uploads"
+mkdir -p "$DST" "$DST/conf" "$DST/run" "$DST/uploads"
+chmod 700 "$DST/conf" "$DST/uploads"
+
+AUTOSTART_WAS_ENABLED=0
+if [ -e "$INIT_FILE" ] || [ -L "$INIT_FILE" ]; then
+  AUTOSTART_WAS_ENABLED=1
+fi
 
 echo
-echo "== stopping old runtime before replacing binaries =="
+echo "== stopping old runtime before migrating =="
 if [ -x "$DST/scripts/stop.sh" ]; then
   sh "$DST/scripts/stop.sh" 2>&1 || true
 fi
@@ -87,17 +71,12 @@ rm -f /var/run/wireguard/wg0.sock
 sleep 1
 
 echo
-echo "== copying binaries =="
-copy_exec "$SRC/bin/wg" "$DST/bin/wg"
-copy_exec "$SRC/bin/wireguard-go" "$DST/bin/wireguard-go"
-copy_exec "$SRC/bin/wg-upload" "$DST/bin/wg-upload"
-
-echo
-echo "== copying scripts =="
-for f in "$SRC/scripts/"*.sh; do
-  name="$(basename "$f")"
-  copy_exec "$f" "$DST/scripts/$name"
-done
+echo "== linking packaged components =="
+rm -rf "$DST/bin" "$DST/scripts"
+ln -s "$SRC/bin" "$DST/bin"
+ln -s "$SRC/scripts" "$DST/scripts"
+echo "bin -> $SRC/bin"
+echo "scripts -> $SRC/scripts"
 
 echo
 echo "== preparing configuration =="
@@ -143,9 +122,15 @@ else
 fi
 
 echo
-echo "== installed binary versions =="
-"$DST/bin/wg" --version 2>&1 || true
-"$DST/bin/wireguard-go" --version 2>&1 || true
+echo "== packaged binary versions =="
+"$SRC/bin/wg" --version 2>&1 || true
+"$SRC/bin/wireguard-go" --version 2>&1 || true
+
+if [ "$AUTOSTART_WAS_ENABLED" -eq 1 ]; then
+  echo
+  echo "== migrating autostart hook =="
+  "$SRC/scripts/autostart.sh" enable
+fi
 
 echo
-echo "OK: components installed/updated"
+echo "OK: state prepared and packaged components linked"

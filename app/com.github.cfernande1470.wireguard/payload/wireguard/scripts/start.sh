@@ -2,8 +2,9 @@
 set -eu
 
 BASE="/var/lib/webosbrew/wireguard"
-WG="$BASE/bin/wg"
-WGGO="$BASE/bin/wireguard-go"
+HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+WG="$HERE/../bin/wg"
+WGGO="$HERE/../bin/wireguard-go"
 IFACE="wg0"
 
 CONF="$BASE/conf/wg0.conf"

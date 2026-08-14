@@ -3,7 +3,7 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_ID="com.github.cfernande1470.wireguard"
-VERSION="1.0.1"
+VERSION="1.0.2"
 APP="$ROOT/app/$APP_ID"
 IPK="$ROOT/dist/${APP_ID}_${VERSION}_all.ipk"
 MANIFEST="$ROOT/dist/$APP_ID.manifest.json"
@@ -26,12 +26,24 @@ for binary in wg wireguard-go wg-upload; do
   }
 done
 
+for script in "$APP/payload/wireguard/install.sh" "$APP/payload/wireguard/scripts/"*.sh; do
+  sh -n "$script"
+done
+
+test -x "$APP/payload/wireguard/scripts/boot.sh"
+
+if grep -R -n -E 'WG(GO)?="\$BASE/bin/|BIN="\$BASE/bin/' "$APP/payload/wireguard/scripts"; then
+  echo "ERROR: packaged binaries must be resolved relative to their scripts" >&2
+  exit 1
+fi
+
 CONTROL="$(ar p "$IPK" control.tar.gz | tar xzO control)"
 echo "$CONTROL" | grep -qx "Package: $APP_ID"
 echo "$CONTROL" | grep -qx "Version: $VERSION"
 echo "$CONTROL" | grep -qx 'Architecture: all'
 
 ar p "$IPK" data.tar.gz | tar tzf - | grep -q "^usr/palm/applications/$APP_ID/appinfo.json$"
+ar p "$IPK" data.tar.gz | tar tzf - | grep -q "^usr/palm/applications/$APP_ID/payload/wireguard/scripts/boot.sh$"
 ar p "$IPK" data.tar.gz | tar tzf - | grep -q "^usr/palm/packages/$APP_ID/packageinfo.json$"
 ar p "$IPK" data.tar.gz | tar xzO "usr/palm/applications/$APP_ID/appinfo.json" | grep -q "\"id\": \"$APP_ID\""
 grep -q "\"id\": \"$APP_ID\"" "$MANIFEST"
