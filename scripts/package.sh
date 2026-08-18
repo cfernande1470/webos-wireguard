@@ -6,57 +6,26 @@ APP_ID="com.github.cfernande1470.wireguard"
 VERSION="1.0.2"
 APP="$ROOT/app/$APP_ID"
 DIST="$ROOT/dist"
-WORK="$(mktemp -d)"
+PACKAGER="${ARES_PACKAGE:-ares-package}"
+IPK="$DIST/${APP_ID}_${VERSION}_all.ipk"
 
-cleanup() {
-  rm -rf "$WORK"
+command -v "$PACKAGER" >/dev/null 2>&1 || {
+  echo "ERROR: ares-package is required." >&2
+  echo "Install @webos-tools/cli or webosbrew/ares-cli-rs, or set ARES_PACKAGE to its path." >&2
+  exit 1
 }
-trap cleanup EXIT HUP INT TERM
 
-DATA="$WORK/data"
-CONTROL="$WORK/control"
-APP_DST="$DATA/usr/palm/applications/$APP_ID"
-PACKAGE_DST="$DATA/usr/palm/packages/$APP_ID"
+mkdir -p "$DIST"
+rm -f "$IPK"
 
-mkdir -p "$APP_DST" "$PACKAGE_DST" "$CONTROL" "$DIST"
-cp -R "$APP/." "$APP_DST/"
+"$PACKAGER" --force-arch all --outdir "$DIST" "$APP"
 
-cat > "$PACKAGE_DST/packageinfo.json" <<EOF
-{
-  "id": "$APP_ID",
-  "version": "$VERSION",
-  "app": "$APP_ID"
+test -f "$IPK" || {
+  echo "ERROR: ares-package did not create $IPK" >&2
+  exit 1
 }
-EOF
 
-INSTALLED_SIZE="$(du -sb "$DATA" | awk '{print $1}')"
-cat > "$CONTROL/control" <<EOF
-Package: $APP_ID
-Version: $VERSION
-Section: misc
-Priority: optional
-Architecture: all
-Installed-Size: $INSTALLED_SIZE
-Maintainer: Carlos Fernandez <cfernande1470@users.noreply.github.com>
-Description: WireGuard client for rooted LG webOS with Homebrew Channel.
-webOS-Package-Format-Version: 2
-webOS-Packager-Version: x.y.x
-EOF
-
-chmod 644 "$CONTROL/control"
-
-rm -f "$DIST/${APP_ID}_${VERSION}_all.ipk"
-printf '2.0\n' > "$WORK/debian-binary"
-tar -C "$CONTROL" -czf "$WORK/control.tar.gz" control
-tar -C "$DATA" -czf "$WORK/data.tar.gz" usr
-(
-  cd "$WORK"
-  # LG appinstalld rejects archives produced in GNU ar deterministic mode because
-  # their member timestamps are forced to the Unix epoch. Match ares-package and
-  # retain the actual member timestamps instead.
-  ar crU "$DIST/${APP_ID}_${VERSION}_all.ipk" debian-binary control.tar.gz data.tar.gz
-)
 cp "$ROOT/$APP_ID.manifest.json" "$DIST/$APP_ID.manifest.json"
 
-echo "Created $DIST/${APP_ID}_${VERSION}_all.ipk"
+echo "Created $IPK"
 echo "Created $DIST/$APP_ID.manifest.json"

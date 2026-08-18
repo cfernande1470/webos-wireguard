@@ -85,6 +85,11 @@ To package manually:
 make package
 ```
 
+Packaging requires `ares-package` from either LG's `@webos-tools/cli` or
+webOSBrew's `ares-cli-rs`. Set `ARES_PACKAGE=/path/to/ares-package` when it is
+not available on `PATH`. The package is forced to architecture `all` because
+the bundled ARMv7 binaries run on both 32-bit and 64-bit TVs.
+
 Output:
 
 ```text
@@ -430,6 +435,7 @@ Changed:
 - Preserve only configuration, logs, and runtime state under `/var/lib/webosbrew/wireguard`
 - Replace the four-digit PIN with a random eight-character access code
 - Stop the upload server after one successful upload or ten minutes, and lock it after five incorrect codes
+- Package releases with the standard `ares-package` tool instead of a custom IPK builder
 
 ### 1.0.1
 
@@ -557,6 +563,11 @@ Para empaquetar manualmente:
 ```sh
 make package
 ```
+
+El empaquetado requiere `ares-package`, incluido tanto en `@webos-tools/cli`
+de LG como en `ares-cli-rs` de webOSBrew. Si no está disponible en `PATH`, usa
+`ARES_PACKAGE=/ruta/a/ares-package`. El paquete fuerza la arquitectura `all`
+porque los binarios ARMv7 incluidos funcionan en televisores de 32 y 64 bits.
 
 Resultado:
 
@@ -904,6 +915,7 @@ Cambios:
 - Solo la configuración, los logs y el estado de ejecución permanecen en `/var/lib/webosbrew/wireguard`
 - El PIN de cuatro cifras se sustituye por un código de acceso aleatorio de ocho caracteres
 - El servidor se detiene tras una subida correcta o diez minutos y se bloquea tras cinco códigos incorrectos
+- Las releases se empaquetan con la herramienta estándar `ares-package` en lugar de un generador IPK propio
 
 ### 1.0.1
 
