@@ -76,7 +76,7 @@ The bundled ARMv7 binaries also run on supported 64-bit LG TVs.
 Release package:
 
 ```text
-com.github.cfernande1470.wireguard_1.0.4_all.ipk
+com.github.cfernande1470.wireguard_1.0.3_all.ipk
 ```
 
 To package manually:
@@ -93,7 +93,7 @@ the bundled ARMv7 binaries run on both 32-bit and 64-bit TVs.
 Output:
 
 ```text
-dist/com.github.cfernande1470.wireguard_1.0.4_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.3_all.ipk
 ```
 
 ### 2. Install using Homebrew Channel
@@ -426,12 +426,6 @@ wireguard-tools/
 
 ## Changelog
 
-### 1.0.4
-
-Changed:
-
-- Refresh the TV interface with a compact dashboard layout, clearer status panel, and improved remote-friendly controls
-
 ### 1.0.3
 
 Fixed:
@@ -568,7 +562,7 @@ Los binarios ARMv7 incluidos también funcionan en televisores LG de 64 bits com
 Paquete de release:
 
 ```text
-com.github.cfernande1470.wireguard_1.0.4_all.ipk
+com.github.cfernande1470.wireguard_1.0.3_all.ipk
 ```
 
 Para empaquetar manualmente:
@@ -585,7 +579,7 @@ porque los binarios ARMv7 incluidos funcionan en televisores de 32 y 64 bits.
 Resultado:
 
 ```text
-dist/com.github.cfernande1470.wireguard_1.0.4_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.3_all.ipk
 ```
 
 ### 2. Instalar usando Homebrew Channel
@@ -918,12 +912,6 @@ wireguard-tools/
 ---
 
 ## Registro de cambios
-
-### 1.0.4
-
-Cambios:
-
-- Renovada la interfaz de TV con un dashboard compacto, estado más claro y controles mejorados para el mando
 
 ### 1.0.3
 

@@ -5,7 +5,7 @@
   "icon": "icon.png",
   "type": "web",
   "vendor": "cfernande1470",
-  "version": "1.0.4",
+  "version": "1.0.3",
   "disableBackHistoryAPI": true,
   "appDescription": "WireGuard client for rooted LG webOS with Homebrew Channel"
 }
