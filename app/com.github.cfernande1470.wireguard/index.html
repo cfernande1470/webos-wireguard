@@ -8,60 +8,97 @@
 
 <body>
   <div class="page">
-    <div class="wrap">
-
-      <div class="lang-row" aria-label="Language selector">
-        <button id="langEn" class="lang-button" type="button" onclick="setLanguage('en')">🇬🇧 English</button>
-        <button id="langEs" class="lang-button" type="button" onclick="setLanguage('es')">🇪🇸 Español</button>
-      </div>
-
-      <div class="title-row">
-        <img src="icon.png" class="logo" alt="WireGuard">
-        <div>
-          <h1>WireGuard</h1>
-          <div class="subtitle" data-i18n="subtitle">WireGuard client for webOS Homebrew</div>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo-wrap">
+            <img src="icon.png" class="logo" alt="WireGuard">
+          </div>
+          <div class="brand-copy">
+            <div class="eyebrow">WEBOS HOMEBREW</div>
+            <h1>WireGuard</h1>
+            <div class="subtitle" data-i18n="subtitle">WireGuard client for webOS Homebrew</div>
+          </div>
         </div>
-      </div>
 
-      <div class="buttons">
-        <button class="upload" onclick="installComponents()" data-i18n="installUpdate">Install / update</button>
-        <button class="primary" onclick="startVpn()" data-i18n="startVpn">Start VPN</button>
-        <button class="danger" onclick="stopVpn()" data-i18n="stopVpn">Stop VPN</button>
-        <button onclick="statusVpn()" data-i18n="status">Status</button>
-        <button class="danger" onclick="cleanupAll()" data-i18n="cleanAll">Uninstall</button>
-      </div>
+        <div class="topbar-right">
+          <div class="connection-pill"><span class="pulse"></span><span data-i18n="rootedTv">Rooted TV</span></div>
+          <div class="lang-row" aria-label="Language selector">
+            <button id="langEn" class="lang-button" type="button" onclick="setLanguage('en')">🇬🇧 English</button>
+            <button id="langEs" class="lang-button" type="button" onclick="setLanguage('es')">🇪🇸 Español</button>
+          </div>
+        </div>
+      </header>
 
-      <div class="buttons">
-        <button onclick="showRoutes()" data-i18n="routes">Routes</button>
-        <button onclick="showConfig()" data-i18n="config">Config</button>
-        <button onclick="showLog()" data-i18n="log">Log</button>
-        <button class="upload" onclick="uploadStart()" data-i18n="uploadConfig">Upload config</button>
-        <button class="donate" onclick="showDonatePopup()" data-i18n="donate">Donate!</button>
-      </div>
+      <main class="dashboard">
+        <section class="control-panel" aria-label="WireGuard controls">
+          <div class="panel-heading">
+            <div>
+              <div class="section-kicker" data-i18n="controlsKicker">CONTROL CENTER</div>
+              <h2 data-i18n="controlsTitle">Tunnel controls</h2>
+            </div>
+            <div class="panel-icon">⌁</div>
+          </div>
 
-      <div class="toggle-row">
-        <label class="toggle-box">
-          <input id="autostartToggle" type="checkbox" onchange="toggleAutostart()">
-          <span data-i18n="startOnBoot">Start on boot</span>
-        </label>
-      </div>
+          <div class="button-grid primary-actions">
+            <button class="action-card install" onclick="installComponents()">
+              <span class="action-icon">↻</span><span class="action-copy"><b data-i18n="installUpdate">Install / update</b><small data-i18n="installHint">Prepare components</small></span>
+            </button>
+            <button class="action-card start" onclick="startVpn()">
+              <span class="action-icon">▶</span><span class="action-copy"><b data-i18n="startVpn">Start VPN</b><small data-i18n="startHint">Bring tunnel online</small></span>
+            </button>
+            <button class="action-card stop" onclick="stopVpn()">
+              <span class="action-icon">■</span><span class="action-copy"><b data-i18n="stopVpn">Stop VPN</b><small data-i18n="stopHint">Take tunnel offline</small></span>
+            </button>
+          </div>
 
-      <div id="statusLine" class="status-line">Ready.</div>
+          <div class="button-grid utility-actions">
+            <button onclick="statusVpn()" data-i18n="status">Status</button>
+            <button onclick="showRoutes()" data-i18n="routes">Routes</button>
+            <button onclick="showConfig()" data-i18n="config">Config</button>
+            <button onclick="showLog()" data-i18n="log">Log</button>
+            <button class="upload" onclick="uploadStart()" data-i18n="uploadConfig">Upload config</button>
+            <button class="donate" onclick="showDonatePopup()" data-i18n="donate">Donate!</button>
+            <button class="danger" onclick="cleanupAll()" data-i18n="cleanAll">Uninstall</button>
+          </div>
 
-      <div class="output-box">
-        <pre id="out" tabindex="0">WireGuard Homebrew ready.</pre>
-      </div>
+          <label class="toggle-box">
+            <span class="toggle-copy"><b data-i18n="startOnBoot">Start on boot</b><small data-i18n="bootHint">Launch the tunnel automatically</small></span>
+            <input id="autostartToggle" type="checkbox" onchange="toggleAutostart()">
+            <span class="switch" aria-hidden="true"></span>
+          </label>
 
-      <div class="scroll-row">
-        <button onclick="scrollOutput(-1)" data-i18n="scrollUp">▲ Up</button>
-        <button onclick="scrollOutput(1)" data-i18n="scrollDown">▼ Down</button>
-        <button onclick="scrollOutputToEnd()" data-i18n="scrollEnd">End</button>
-      </div>
+          <div class="hint-card" data-i18n-html="hint">
+            To upload a configuration: press <b>Upload config</b>, open the URL on your computer and send your <code>wg0.conf</code>.
+          </div>
+        </section>
 
-      <div class="hint" data-i18n-html="hint">
-        To upload a configuration: press <b>Upload config</b>, open the URL on your computer and send your <code>wg0.conf</code>.
-      </div>
+        <section class="activity-panel" aria-label="WireGuard activity">
+          <div class="activity-header">
+            <div>
+              <div class="section-kicker" data-i18n="activityKicker">LIVE OUTPUT</div>
+              <h2 data-i18n="activityTitle">Activity</h2>
+            </div>
+            <div class="status-badge"><span class="status-dot"></span><span data-i18n="consoleReady">Console ready</span></div>
+          </div>
 
+          <div class="status-card">
+            <span class="status-card-icon">◌</span>
+            <div><span class="status-label" data-i18n="currentStatus">CURRENT STATUS</span><div id="statusLine" class="status-line">Ready.</div></div>
+          </div>
+
+          <div class="output-box">
+            <div class="output-bar"><span class="terminal-lights"><i></i><i></i><i></i></span><span data-i18n="terminalTitle">WireGuard console</span><span class="terminal-caption">/var/lib/webosbrew/wireguard</span></div>
+            <pre id="out" tabindex="0">WireGuard Homebrew ready.</pre>
+          </div>
+
+          <div class="scroll-row">
+            <button onclick="scrollOutput(-1)" data-i18n="scrollUp">▲ Up</button>
+            <button onclick="scrollOutput(1)" data-i18n="scrollDown">▼ Down</button>
+            <button onclick="scrollOutputToEnd()" data-i18n="scrollEnd">End</button>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
