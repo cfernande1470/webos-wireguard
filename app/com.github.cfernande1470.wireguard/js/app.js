@@ -659,3 +659,166 @@ function cleanupAll() {
     30000
   );
 }
+
+function remoteKeyCode(event) {
+  if (event && typeof event.keyCode === "number" && event.keyCode) {
+    return event.keyCode;
+  }
+
+  if (event && typeof event.which === "number") {
+    return event.which;
+  }
+
+  if (event && event.key) {
+    const keys = {
+      ArrowLeft: 37,
+      ArrowUp: 38,
+      ArrowRight: 39,
+      ArrowDown: 40,
+      Enter: 13,
+      Escape: 27,
+      GoBack: 461
+    };
+    return keys[event.key] || 0;
+  }
+
+  return 0;
+}
+
+function visibleModal() {
+  const modals = document.querySelectorAll(".modal");
+  for (let i = 0; i < modals.length; i++) {
+    if (!modals[i].classList.contains("hidden")) return modals[i];
+  }
+  return null;
+}
+
+function remoteFocusableElements() {
+  const modal = visibleModal();
+  const root = modal || document;
+  const elements = root.querySelectorAll("button, input[type=checkbox]");
+  const focusable = [];
+
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    if (element.disabled) continue;
+    if (element.offsetWidth === 0 || element.offsetHeight === 0) continue;
+    focusable.push(element);
+  }
+
+  return focusable;
+}
+
+function moveRemoteFocus(direction) {
+  const elements = remoteFocusableElements();
+  if (!elements.length) return false;
+
+  let current = document.activeElement;
+  if (elements.indexOf(current) === -1) {
+    elements[0].focus();
+    return true;
+  }
+
+  const currentRect = current.getBoundingClientRect();
+  const currentX = currentRect.left + currentRect.width / 2;
+  const currentY = currentRect.top + currentRect.height / 2;
+  let best = null;
+  let bestScore = Infinity;
+
+  for (let i = 0; i < elements.length; i++) {
+    const candidate = elements[i];
+    if (candidate === current) continue;
+
+    const rect = candidate.getBoundingClientRect();
+    const candidateX = rect.left + rect.width / 2;
+    const candidateY = rect.top + rect.height / 2;
+    const dx = candidateX - currentX;
+    const dy = candidateY - currentY;
+    const primary = direction === "left" || direction === "right" ? dx : dy;
+    const cross = direction === "left" || direction === "right" ? dy : dx;
+
+    if (
+      (direction === "left" && primary >= -2) ||
+      (direction === "right" && primary <= 2) ||
+      (direction === "up" && primary >= -2) ||
+      (direction === "down" && primary <= 2)
+    ) {
+      continue;
+    }
+
+    // Prefer controls in the same row/column, while still allowing wrapped
+    // flex rows to be reached when the nearest control is slightly offset.
+    const score = Math.abs(primary) + Math.abs(cross) * 2;
+    if (score < bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  }
+
+  if (!best) return false;
+  best.focus();
+  if (typeof best.scrollIntoView === "function") {
+    try {
+      best.scrollIntoView({ block: "nearest", inline: "nearest" });
+    } catch (e) {
+      // Older webOS browsers only support the boolean scrollIntoView argument.
+      best.scrollIntoView(false);
+    }
+  }
+  return true;
+}
+
+function handleRemoteKey(event) {
+  const code = remoteKeyCode(event);
+  const modal = visibleModal();
+
+  if (code === 461 || code === 27) {
+    if (!modal) {
+      if (
+        code === 461 &&
+        typeof webOS !== "undefined" &&
+        webOS.platformBack
+      ) {
+        event.preventDefault();
+        webOS.platformBack();
+      }
+      return;
+    }
+    event.preventDefault();
+    if (modal.id === "uploadModal") {
+      closeUploadPopup();
+    } else if (modal.id === "donateModal") {
+      closeDonatePopup();
+    }
+    return;
+  }
+
+  if (code === 13) {
+    const active = document.activeElement;
+    if (
+      active &&
+      (active.tagName === "BUTTON" ||
+        (active.tagName === "INPUT" && active.type === "checkbox"))
+    ) {
+      event.preventDefault();
+      active.click();
+    }
+    return;
+  }
+
+  const directions = {
+    37: "left",
+    38: "up",
+    39: "right",
+    40: "down"
+  };
+  const direction = directions[code];
+  if (!direction) return;
+
+  if (moveRemoteFocus(direction)) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
+document.addEventListener("keydown", handleRemoteKey, false);

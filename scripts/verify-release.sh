@@ -3,7 +3,7 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_ID="com.github.cfernande1470.wireguard"
-VERSION="1.0.2"
+VERSION="1.0.3"
 APP="$ROOT/app/$APP_ID"
 IPK="$ROOT/dist/${APP_ID}_${VERSION}_all.ipk"
 MANIFEST="$ROOT/dist/$APP_ID.manifest.json"
