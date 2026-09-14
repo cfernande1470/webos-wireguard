@@ -19,6 +19,7 @@ DEVFILE="$RUN/original-dev"
 ENDPOINTS_FILE="$RUN/endpoint-routes"
 APPLIED_ROUTES_FILE="$RUN/applied-routes"
 SETCONF_FILE="$RUN/wg0.setconf"
+IPV6_STATE_FILE="$RUN/original-ipv6-disabled"
 
 mkdir -p "$RUN" /var/run/wireguard
 
@@ -197,6 +198,18 @@ if [ -n "${ORIG_DEV:-}" ]; then
   fi
 else
   echo "WARNING: cannot find original default route outside $IFACE"
+fi
+
+echo "== disabling IPv6 on $ORIG_DEV to prevent leaks outside the tunnel =="
+if [ -n "${ORIG_DEV:-}" ]; then
+  CUR_DISABLE_V6="$(sysctl -n "net.ipv6.conf.$ORIG_DEV.disable_ipv6" 2>/dev/null || echo "")"
+  if [ -n "$CUR_DISABLE_V6" ]; then
+    echo "$CUR_DISABLE_V6" > "$IPV6_STATE_FILE"
+    sysctl -w "net.ipv6.conf.$ORIG_DEV.disable_ipv6=1" >/dev/null 2>&1 || \
+      echo "WARNING: could not disable IPv6 on $ORIG_DEV"
+  else
+    echo "WARNING: could not read IPv6 state for $ORIG_DEV, leaving it untouched"
+  fi
 fi
 
 echo "== preparing configuration =="

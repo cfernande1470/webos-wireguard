@@ -9,6 +9,7 @@ ENDPOINTS_FILE="$BASE/run/endpoint-routes"
 APPLIED_ROUTES_FILE="$BASE/run/applied-routes"
 GWFILE="$BASE/run/original-gateway"
 DEVFILE="$BASE/run/original-dev"
+IPV6_STATE_FILE="$BASE/run/original-ipv6-disabled"
 
 echo "== deleting applied WireGuard routes =="
 if [ -f "$APPLIED_ROUTES_FILE" ]; then
@@ -33,6 +34,17 @@ if [ -f "$GWFILE" ] && [ -f "$DEVFILE" ]; then
   if [ -n "$GW" ] && [ -n "$DEV" ]; then
     ip route replace default via "$GW" dev "$DEV" 2>/dev/null || true
   fi
+fi
+
+echo "== restoring original IPv6 state =="
+if [ -f "$DEVFILE" ] && [ -f "$IPV6_STATE_FILE" ]; then
+  DEV="$(cat "$DEVFILE")"
+  PREV_DISABLE_V6="$(cat "$IPV6_STATE_FILE")"
+  if [ -n "$DEV" ] && [ -n "$PREV_DISABLE_V6" ]; then
+    sysctl -w "net.ipv6.conf.$DEV.disable_ipv6=$PREV_DISABLE_V6" >/dev/null 2>&1 || \
+      echo "WARNING: could not restore IPv6 state on $DEV"
+  fi
+  rm -f "$IPV6_STATE_FILE"
 fi
 
 echo "== removing interface =="
