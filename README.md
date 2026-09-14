@@ -76,7 +76,7 @@ The bundled ARMv7 binaries also run on supported 64-bit LG TVs.
 Release package:
 
 ```text
-com.github.cfernande1470.wireguard_1.0.3_all.ipk
+com.github.cfernande1470.wireguard_1.0.5_all.ipk
 ```
 
 To package manually:
@@ -93,7 +93,7 @@ the bundled ARMv7 binaries run on both 32-bit and 64-bit TVs.
 Output:
 
 ```text
-dist/com.github.cfernande1470.wireguard_1.0.3_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.5_all.ipk
 ```
 
 ### 2. Install using Homebrew Channel
@@ -427,6 +427,16 @@ wireguard-tools/
 
 ## Changelog
 
+### 1.0.5
+
+Fixed:
+
+- Prevent IPv6 traffic from bypassing IPv4-only VPN configurations
+- Preserve and restore the original IPv6 state across tunnel restarts and failed starts
+- Serialize start and stop operations to prevent overlapping tunnel processes
+- Track the long-lived `wireguard-go` process instead of its short-lived launcher
+- Wait up to 60 seconds for networking during autostart and report a clear timeout
+
 ### 1.0.3
 
 Fixed:
@@ -563,7 +573,7 @@ Los binarios ARMv7 incluidos también funcionan en televisores LG de 64 bits com
 Paquete de release:
 
 ```text
-com.github.cfernande1470.wireguard_1.0.3_all.ipk
+com.github.cfernande1470.wireguard_1.0.5_all.ipk
 ```
 
 Para empaquetar manualmente:
@@ -580,7 +590,7 @@ porque los binarios ARMv7 incluidos funcionan en televisores de 32 y 64 bits.
 Resultado:
 
 ```text
-dist/com.github.cfernande1470.wireguard_1.0.3_all.ipk
+dist/com.github.cfernande1470.wireguard_1.0.5_all.ipk
 ```
 
 ### 2. Instalar usando Homebrew Channel
@@ -914,6 +924,16 @@ wireguard-tools/
 ---
 
 ## Registro de cambios
+
+### 1.0.5
+
+Corregido:
+
+- Evitado que el tráfico IPv6 escape de configuraciones VPN que sólo admiten IPv4
+- Conservado y restaurado el estado IPv6 original tras reinicios del túnel y arranques fallidos
+- Serializadas las operaciones de inicio y parada para evitar procesos de túnel solapados
+- Registrado el proceso persistente de `wireguard-go` en lugar de su lanzador temporal
+- Ampliada a 60 segundos la espera de red del inicio automático, con un error claro al agotarse
 
 ### 1.0.3
 
