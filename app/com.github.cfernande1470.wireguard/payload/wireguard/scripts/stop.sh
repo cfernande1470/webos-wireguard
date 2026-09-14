@@ -10,6 +10,29 @@ APPLIED_ROUTES_FILE="$BASE/run/applied-routes"
 GWFILE="$BASE/run/original-gateway"
 DEVFILE="$BASE/run/original-dev"
 IPV6_STATE_FILE="$BASE/run/original-ipv6-disabled"
+OPERATION_LOCK="$BASE/run/operation.lock"
+
+mkdir -p "$BASE/run"
+
+acquire_operation_lock() {
+  if mkdir "$OPERATION_LOCK" 2>/dev/null; then
+    echo "$$" > "$OPERATION_LOCK/pid"
+    return 0
+  fi
+
+  lock_pid="$(cat "$OPERATION_LOCK/pid" 2>/dev/null || true)"
+  if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+    echo "ERROR: another WireGuard start/stop operation is running (PID $lock_pid)"
+    exit 1
+  fi
+
+  rm -rf "$OPERATION_LOCK"
+  mkdir "$OPERATION_LOCK"
+  echo "$$" > "$OPERATION_LOCK/pid"
+}
+
+acquire_operation_lock
+trap 'rc=$?; rm -rf "$OPERATION_LOCK"; exit "$rc"' EXIT HUP INT TERM
 
 echo "== deleting applied WireGuard routes =="
 if [ -f "$APPLIED_ROUTES_FILE" ]; then

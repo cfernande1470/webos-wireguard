@@ -240,9 +240,10 @@ The VPN endpoint is pinned outside the tunnel using the original default route, 
 
 ## IPv6 status
 
-IPv6 routes and IPv6 addresses are currently ignored.
-
-This is intentional for version `1.0.2`.
+IPv6 routes and IPv6 addresses in the WireGuard configuration are currently
+ignored. While the tunnel is active, IPv6 is disabled on the original network
+interface to prevent traffic from bypassing an IPv4-only VPN. The previous
+interface setting is restored when WireGuard stops.
 
 ---
 
@@ -726,9 +727,10 @@ La ruta hacia el endpoint VPN se fija fuera del túnel usando la ruta por defect
 
 ## Estado de IPv6
 
-Las rutas IPv6 y direcciones IPv6 se ignoran actualmente.
-
-Esto es intencionado en la versión `1.0.2`.
+Las rutas y direcciones IPv6 de la configuración de WireGuard se ignoran por
+ahora. Mientras el túnel está activo, IPv6 se desactiva en la interfaz de red
+original para evitar que el tráfico se escape de una VPN que sólo admite IPv4.
+Al detener WireGuard se restaura el valor anterior de la interfaz.
 
 ---
 

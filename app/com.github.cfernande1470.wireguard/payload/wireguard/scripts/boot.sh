@@ -24,15 +24,22 @@ fi
 mkdir -p "$BASE/run"
 
 (
-  # Start WireGuard as soon as a default route exists, waiting at most 20 seconds.
-  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  # Some TVs restore networking late after a cold boot. Wait up to 60 seconds.
+  i=0
+  while [ "$i" -lt 60 ]; do
     if ip route show default | grep -q default; then
       break
     fi
     sleep 1
+    i=$((i + 1))
   done
 
-  "$HERE/start.sh" >"$BASE/run/autostart.log" 2>&1
-) &
+  if ! ip route show default | grep -q default; then
+    echo "ERROR: no default route after 60 seconds"
+    exit 1
+  fi
+
+  "$HERE/start.sh"
+) >"$BASE/run/autostart.log" 2>&1 &
 
 exit 0
